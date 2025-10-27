@@ -22,6 +22,15 @@ fn main() {
     let mut s = String::from("lololo");
     change(&mut s);
     println!("{s}");
+
+    let s = String::from("hello world");
+    let word = first_word(&s.as_str()); // or &s[..]
+    println!("The first word is {word}");
+    let second = second_word(&s[..]);
+    println!("The second word is {second}");
+    let single = String::from("single word");
+    let empty = second_word(&single[2..8]);
+    println!("The second word is '{empty}'");
 }
 
 fn take_ownership(some_string: &String) {
@@ -53,4 +62,39 @@ fn calculate_length_ref(s: &String) -> usize {
 
 fn change(some_string: &mut String) {
     some_string.push_str(" lalala");
+}
+
+fn first_word(s: &str) -> &str {
+    let bytes = s.as_bytes();
+
+    for (i, &item) in bytes.iter().enumerate() {
+        if item == b' ' {
+            return &s[..i];
+        }
+    }
+
+    &s[..]
+}
+
+fn second_word(s: &str) -> &str {
+    let bytes = s.as_bytes();
+    let mut space_index = 0;
+    let mut space_found = false;
+
+    for (i, &item) in bytes.iter().enumerate() {
+        if item == b' ' {
+            if space_found {
+                return &s[space_index + 1..i];
+            } else {
+                space_index = i;
+                space_found = true;
+            }
+        }
+    }
+
+    if space_found {
+        &s[space_index + 1..]
+    } else {
+        &s[0..0] // return an empty string slice if there's no second word
+    }
 }
