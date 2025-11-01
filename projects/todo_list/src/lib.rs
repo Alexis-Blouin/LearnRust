@@ -1,12 +1,10 @@
 use colored::*;
 use dirs;
 use std::fs;
-use std::fs::OpenOptions;
+use std::fs::{remove_file, OpenOptions};
 use std::io::prelude::Read;
 use std::io::{self, BufReader, BufWriter, Write};
-use std::path::Path;
 use std::{env, process};
-use std::fmt::format;
 
 pub struct Entry {
     pub todo_entry: String,
@@ -87,7 +85,12 @@ impl Todo {
 
         let todo_bak: String = match env::var("TODO_BAK_DIR") {
             Ok(t) => t,
-            Err(_) => String::from("/tmp/todo.bak")
+            Err(_) => {
+                // String::from("/tmp/todo.bak") // Works only on linux
+                let mut tmp = env::temp_dir(); // Cross-platform temp directory
+                tmp.push("todo.bak");
+                tmp.to_string_lossy().to_string()
+            }
         };
 
         let no_backup = env::var("TODO_NOBACKUP").is_ok();
@@ -169,7 +172,7 @@ impl Todo {
             eprintln!("todo add takes at least 1 argument");
             process::exit(1);
         }
-        // Opens the TODO file with a permission to
+        // Opens the TODO file with a permission to:
         let todofile = OpenOptions::new()
             .create(true) // Create the file if it does not exist
             .append(true) // Append a line to it
@@ -185,6 +188,150 @@ impl Todo {
             // Appends a new task to the file
             let entry = Entry::new(arg.to_string(), false);
             let line = entry.file_line();
+            buffer
+                .write_all(line.as_bytes())
+                .expect("unable to write data");
+        }
+    }
+
+    pub fn remove(&self, args: &[String]) {
+        if args.is_empty() {
+            eprintln!("todo rm takes at least 1 argument");
+            process::exit(1);
+        }
+        // Opens the TODO file with a permission to:
+        let todofile = OpenOptions::new()
+            .write(true)
+            .truncate(true)
+            .open(&self.todo_path)
+            .expect("Couldn't open the todofile");
+
+        let mut buffer = BufWriter::new(todofile);
+
+        // Loop will re-add the tasks to the file if they are not deleted
+        for (pos, line) in self.todo.iter().enumerate() {
+            // If asked to delete the task, we skip it and don't re-add it
+            if args.contains(&(pos + 1).to_string()) {
+                continue;
+            }
+
+            let line = format!("{}\n", line);
+
+            buffer
+                .write_all(line.as_bytes())
+                .expect("unable to write data");
+        }
+    }
+
+    pub fn remove_file(&self) {
+        match remove_file(&self.todo_path) {
+            Ok(_) => {},
+            Err(e) => {
+                eprintln!("Error while clearing the TODO file: {}", e)
+            }
+        };
+    }
+
+    // Clear TODO by removing TODO file
+    pub fn reset(&self) {
+        if self.no_backup {
+            self.remove_file();
+        } else {
+            match fs::copy(&self.todo_path, &self.todo_bak) {
+                Ok(_) => self.remove_file(),
+                Err(_) => {
+                    eprintln!("Couldn't backup the TODO file")
+                }
+            };
+        }
+    }
+
+    pub fn restore(&self) {
+        fs::copy(&self.todo_bak, &self.todo_path).expect("unable to restore the backup");
+    }
+
+    // Sort done tasks
+    pub fn sort(&self) {
+        // Create a new empty String
+        let new_todo: String;
+
+        let mut todo = String::new();
+        let mut done = String::new();
+
+        for line in self.todo.iter() {
+            let entry = Entry::read_line(line);
+            let line = format!("{}\n", line);
+            if entry.done {
+                done.push_str(&line);
+            } else {
+                todo.push_str(&line);
+            }
+        }
+
+        new_todo = format!("{}{}", &todo, &done);
+        // Opens the TODO file with a permission to:
+        let mut todofile = OpenOptions::new()
+            .write(true)
+            .truncate(true)
+            .open(&self.todo_path)
+            .expect("Couldn't open the todofile");
+
+        // Wrties content of the new TODO variable into the TODO file
+        todofile
+            .write_all(new_todo.as_bytes())
+            .expect("Error while trying to save the todofile");
+    }
+
+    pub fn done(&self, args: &[String]){
+        if args.is_empty() {
+            eprintln!("todo done takes at least 1 argument");
+            process::exit(1);
+        }
+        // Opens the TODO file with a permission to:
+        let todofile = OpenOptions::new()
+            .write(true)
+            .truncate(true)
+            .open(&self.todo_path)
+            .expect("Couldn't open the todofile");
+
+        let mut buffer = BufWriter::new(todofile);
+        let mut data = String::new();
+
+        // Loop will re-add the tasks to the file if they are not deleted
+        for (pos, line) in self.todo.iter().enumerate() {
+            let mut entry = Entry::read_line(&line);
+            if args.contains(&(pos + 1).to_string()) {
+                entry.done = !entry.done;
+            }
+            let line = entry.file_line();
+
+            data.push_str(&line);
+        }
+        buffer
+            .write_all(data.as_bytes())
+            .expect("unable to write data");
+    }
+
+    pub fn edit(&self, args: &[String]){
+        if args.is_empty() || args.len() != 2 {
+            eprintln!("todo edit takes exact 2 arguments");
+            process::exit(1);
+        }
+        // Opens the TODO file with a permission to:
+        let todofile = OpenOptions::new()
+            .write(true)
+            .truncate(true)
+            .open(&self.todo_path)
+            .expect("Couldn't open the todofile");
+        let mut buffer = BufWriter::new(todofile);
+
+        for (pos, line) in self.todo.iter().enumerate() {
+            let mut entry = Entry::read_line(&line);
+            if args[0] == (pos + 1).to_string() {
+                entry.todo_entry = args[1].clone();
+            }
+            let line = entry.file_line();
+
             buffer
                 .write_all(line.as_bytes())
                 .expect("unable to write data");
