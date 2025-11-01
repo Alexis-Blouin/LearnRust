@@ -1,6 +1,7 @@
 use std::env;
 use todo_list::{help, Todo};
 
+// Code made following this repo: https://github.com/sioodmy/todo
 fn main() {
     let todo = Todo::new().expect("Couldn't create the todo instance");
 
