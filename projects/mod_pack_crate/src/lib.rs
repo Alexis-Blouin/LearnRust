@@ -1,20 +1,6 @@
-use std::fs::create_dir;
+mod front_of_house;
 
-mod front_of_house {
-    pub mod hosting {
-        pub fn add_to_waitlist() {}
-
-        fn seat_at_table() {}
-    }
-
-    mod serving {
-        fn take_order() {}
-
-        fn serve_order() {}
-
-        fn take_payment() {}
-    }
-}
+pub use crate::front_of_house::hosting;
 
 pub fn eat_at_restaurant() {
     // Absolute path
@@ -24,6 +10,9 @@ pub fn eat_at_restaurant() {
     front_of_house::hosting::add_to_waitlist();
     // Doesn't work because private
     // front_of_house::hosting::seat_at_table();
+
+    // With use
+    hosting::add_to_waitlist();
 
     // Order a breakfast in the summer with Rye bread
     let mut meal = back_of_house::Breakfast::summer("Rye");
@@ -36,6 +25,13 @@ pub fn eat_at_restaurant() {
 
     let order1 = back_of_house::Appetizer::Soup;
     let order2 = back_of_house::Appetizer::Salad;
+}
+
+mod customer {
+    pub fn eat_at_restaurant() {
+        // Doesn't work even with use above since different scope
+        // hosting::add_to_waitlist();
+    }
 }
 
 fn deliver_order() {}
