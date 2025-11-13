@@ -74,4 +74,67 @@ fn main() {
             SpreadsheetCell::Text(i) => println!("String: {i}"),
         }
     }
+
+    let mut s = String::new();
+
+    let data = "initial contents";
+    println!("{data}");
+
+    let s = data.to_string();
+    // Also works directly on the literal
+    let s = "initial contents".to_string();
+    let s = String::from("initial contents");
+    println!("{s}");
+
+    let mut s = String::from("foo");
+    s.push_str("bar");
+    println!("{s}");
+
+    let mut s1 = String::from("foo");
+    let s2 = "bar";
+    s1.push_str(s2);
+    println!("s1: {s1}, s2: {s2}");
+
+    let mut s = String::from("lo");
+    s.push('s');
+    println!("{s}");
+
+    let s1 = String::from("Hello, ");
+    let s2 = String::from("world!");
+    // After this, s1 is no longer available as we took ownership of it
+    let s3 = s1 + &s2;
+    //let s3 = &s1 + &s2; // And this is not working because add(self, s: &str) -> Sting
+    println!("{s3}");
+
+    let s1 = String::from("tic");
+    let s2 = String::from("tac");
+    let s3 = String::from("toe");
+    // Pretty unwieldy with the + operator
+    let s = s1 + "-" + &s2 + "-" + &s3;
+    println!("{s}");
+
+    let s1 = String::from("tic");
+    let s2 = String::from("tac");
+    let s3 = String::from("toe");
+    // Better and no loose of ownership
+    let s = format!("{s1}-{s2}-{s3}");
+    println!("{s}");
+
+    let h1 = String::from("hi");
+    //let h = hi[0]; // Not working
+    let h = h1.chars().nth(0).unwrap(); // unwrap() returns the contained Some value
+    println!("{}", h);
+
+    let hello = "Здравствуйте";
+    let s = &hello[0..4];
+    //let s = &hello[0..1]; // Would panic because it's slicing part of a character
+    println!("{}", s); // Prints Зд because each char is 2 bytes here
+
+    for c in "Здравствуйте".chars(){
+        println!("{c}");
+    }
+    // Prints the raw bytes
+    for b in "Зд".bytes() {
+        println!("{b}");
+    }
 }
