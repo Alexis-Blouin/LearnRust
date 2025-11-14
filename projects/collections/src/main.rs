@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 fn main() {
     // Creates empty Vector with i32 type values
     let v: Vec<i32> = Vec::new();
@@ -137,4 +139,51 @@ fn main() {
     for b in "Зд".bytes() {
         println!("{b}");
     }
+
+    let mut scores = HashMap::new();
+    // Can do this if we don't have direct inserts after
+    // let mut scores: HashMap<String, i32> = HashMap::new();
+
+    scores.insert(String::from("Blue"), 10);
+    scores.insert(String::from("Yellow"), 50);
+    scores.insert(String::from("Red"), 25);
+    println!("scores = {:?}", scores);
+
+    let team_name = String::from("Blue");
+    // copied allows to not get a reference and unwrap gets the value or 0 if no score
+    let score = scores.get(&team_name).copied().unwrap_or(0);
+    println!("{team_name} score is {score}");
+
+    for (key, value) in &scores {
+        println!("{}: {}", key, value);
+    }
+
+    let field_name = String::from("Favorite color");
+    let field_value = String::from("Blue");
+
+    let mut map = HashMap::new();
+    map.insert(field_name, field_value);
+    println!("map = {:?}", map);
+    // These fail because String doesn't have the Copy trait
+    // println!("{field_name}");
+    // println!("{field_value}");
+
+    // Overwrites original value of 'Blue'
+    scores.insert(String::from("Blue"), 25);
+    println!("scores = {:?}", scores);
+
+    // Checks if value exists before inserting so no overwrite of blue
+    scores.entry(String::from("Blue")).or_insert(65);
+    scores.entry(String::from("Orange")).or_insert(90);
+    println!("scores = {:?}", scores);
+
+    let text = "hello world wonderful world";
+
+    let mut map = HashMap::new();
+
+    for word in text.split_whitespace(){
+        let count = map.entry(word).or_insert(0);
+        *count += 1; // Dereferences so modifies the value in map
+    }
+    println!("map = {:?}", map);
 }
