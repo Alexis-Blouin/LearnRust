@@ -1,0 +1,10 @@
+[package]
+name = "error_handling"
+version = "0.1.0"
+edition = "2024"
+
+# Panic won't unwind the program for the release binary
+[profile.release]
+panic = 'abort'
+
+[dependencies]
