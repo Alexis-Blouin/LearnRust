@@ -3,6 +3,7 @@ use std::fs;
 use std::fs::File;
 use std::io::{self, read_to_string, Read};
 use std::io::ErrorKind;
+use std::net::IpAddr;
 
 // Returning Box<dyn Error> instead of io::Error allows us to return any type of error through the main function
 fn main() -> Result<(), Box<dyn Error>> {
@@ -85,4 +86,10 @@ fn read_username_from_file() -> Result<String, io::Error> {
 
 fn last_car_of_first_line(text: &str) -> Option<char> {
     text.lines().next()?.chars().last()
+}
+
+// Here's an example case where you want the program to panic since the hardcoded address should be valid
+fn get_default_ip_address() -> IpAddr {
+    let home: IpAddr = "127.0.0.1".parse().expect("Hardcoded IP address should be valid");
+    home
 }
