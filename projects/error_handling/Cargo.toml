@@ -8,3 +8,4 @@ edition = "2024"
 panic = 'abort'
 
 [dependencies]
+rand = "0.10.0-rc.5"

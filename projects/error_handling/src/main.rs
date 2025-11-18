@@ -1,9 +1,14 @@
+mod gessing_game;
+
+use std::cmp::Ordering;
 use std::error::Error;
 use std::fs;
 use std::fs::File;
 use std::io::{self, read_to_string, Read};
 use std::io::ErrorKind;
 use std::net::IpAddr;
+use rand::Rng;
+use crate::gessing_game::Guess;
 
 // Returning Box<dyn Error> instead of io::Error allows us to return any type of error through the main function
 fn main() -> Result<(), Box<dyn Error>> {
@@ -50,6 +55,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     // This works only if the method it's inside return Result<> or Option<>
     let greeting_file = fs::read_to_string("hello.txt")?;
 
+    gessing_game();
+
     Ok(())
 }
 
@@ -92,4 +99,45 @@ fn last_car_of_first_line(text: &str) -> Option<char> {
 fn get_default_ip_address() -> IpAddr {
     let home: IpAddr = "127.0.0.1".parse().expect("Hardcoded IP address should be valid");
     home
+}
+
+fn gessing_game() {
+    println!("Guess the number!");
+
+    let secret_number = rand::rng().random_range(1..=100);
+
+    loop{
+        println!("Please input your guess.");
+
+        let mut guess = String::new();
+
+        io::stdin()
+            .read_line(&mut guess)
+            .expect("Failed to read line");
+
+        let guess: i32 = match guess.trim().parse() {
+            Ok(num) => num,
+            Err(_) => continue,
+        };
+
+        // Possible to check if number is valid here
+        // if guess < 1 || guess > 100 {
+        //     println!("Guess needs to be between 1 and 100.");
+        //     continue;
+        // }
+        // Or using the Guess module we created that has as contract the respect of the range
+        let guess = Guess::new(guess);
+
+        println!("You guessed: {}", guess.value());
+
+        // We don't need that anymore since the guess module is checking it for us
+        match guess.value().cmp(&secret_number) {
+            Ordering::Less => println!("Too small!"),
+            Ordering::Greater => println!("Too big!"),
+            Ordering::Equal => {
+                println!("You win!");
+                break;
+            }
+        }
+    }
 }
