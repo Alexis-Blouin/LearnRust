@@ -1,3 +1,6 @@
+use std::fmt::Display;
+use generics::{NewsArticle, SocialPost, Summary};
+
 struct Point<T>{
     x: T,
     y: T,
@@ -23,6 +26,27 @@ struct PointMix<T, U> {
 impl<T, U> PointMix<T, U>{
     fn mixup<V, W>(self, other: PointMix<V, W>) -> PointMix<T, W> {
         PointMix{ x: self.x, y: other.y }
+    }
+}
+
+struct Pair<T> {
+    x: T,
+    y: T,
+}
+
+impl<T> Pair<T> {
+    fn new(x: T, y: T) -> Self{
+        Self{x, y}
+    }
+}
+
+impl<T: Display + PartialOrd> Pair<T> {
+    fn cmp_display(&self) {
+        if self.x >= self.y {
+            println!("The largest member is x = {}", self.x);
+        } else {
+            println!("The largest member is y = {}", self.y);
+        }
     }
 }
 
@@ -55,6 +79,31 @@ fn main() {
     let p2 = PointMix { x: "Hello", y: 'c' };
     let p3 = p1.mixup(p2);
     println!("p3.x = {}, p3.y = {}", p3.x, p3.y);
+
+    let post = SocialPost {
+        username: String::from("horse_ebooks"),
+        content: String::from(
+            "of course, as you probably already know, people",
+        ),
+        reply: false,
+        repost: false,
+    };
+    println!("1 new post: {}", post.summarize());
+
+    let article = NewsArticle {
+        headline: String::from("Penguins win the Stanley Cup Championship!"),
+        location: String::from("Pittsburgh, PA, USA"),
+        author: String::from("Iceburgh"),
+        content: String::from(
+            "The Pittsburgh Penguins once again are the best \
+             hockey team in the NHL.",
+        ),
+    };
+    // Is gonna use the default implementation of summarize
+    println!("New article available! {}", article.summarize());
+
+    let my_pair = Pair::new(5, 10);
+    my_pair.cmp_display();
 }
 
 // fn largest_i32(list: &[i32]) -> &i32 {
