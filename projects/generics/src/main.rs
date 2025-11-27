@@ -50,6 +50,23 @@ impl<T: Display + PartialOrd> Pair<T> {
     }
 }
 
+struct ImportantExcerpt<'a> {
+    part: &'a str,
+}
+
+impl<'a> ImportantExcerpt<'a> {
+    // first elision rule
+    fn level(&self) -> i32 {
+        3
+    }
+
+    // third elision rule
+    fn announce_and_return_part(&self, announcement: &str) -> &str {
+        println!("Attention please: {}", announcement);
+        self.part
+    }
+}
+
 fn main() {
     let number_list = vec![34, 50, 25, 100, 65];
     let result = largest(&number_list);
@@ -104,6 +121,51 @@ fn main() {
 
     let my_pair = Pair::new(5, 10);
     my_pair.cmp_display();
+
+    let string1 = String::from("abcd");
+    let string2 = "xyz";
+
+    let result = longest(string1.as_str(), string2);
+    println!("The longest string is {}", result);
+
+    let string1 = String::from("long string is long");
+    let result;
+    {
+        let string2 = String::from("xyz");
+
+        result = longest(string1.as_str(), string2.as_str());
+        println!("The longest string is {}", result);
+    }
+
+    let string1 = String::from("long string is long");
+    let result;
+    {
+        let string2 = String::from("xyz");
+
+        result = longest(string1.as_str(), string2.as_str());
+    }
+    // Doesn't work since string2 is out of scope even if it is string1 that is returned
+    //println!("The longest string is {}", result);
+
+    lifetime_test();
+
+    let string1 = String::from("long string is long");
+    let result;
+    {
+        let string2 = String::from("xyz");
+
+        result = first(string1.as_str(), string2.as_str());
+    }
+    // Works here because the lifetime is only on the first parameter, so the second can get out of scope
+    println!("The longest string is {}", result);
+
+    let novel = String::from("Call me Ishmael. Some years ago...");
+    let first_sentence = novel.split('.').next().unwrap();
+    let i = ImportantExcerpt {
+        part: first_sentence,
+    };
+
+    let s: &'static str = "I have a static lifetime.";
 }
 
 // fn largest_i32(list: &[i32]) -> &i32 {
@@ -134,4 +196,72 @@ fn largest<T: std::cmp::PartialOrd>(list: &[T]) -> &T {
         }
     }
     largest
+}
+
+fn longest<'a>(x: &'a str, y: &'a str) -> &'a str {
+    if x.len() > y.len() { x } else { y }
+}
+
+// Function using a mix of lifetime and generic and trait
+fn longest_with_an_announcement<'a, T>(x: &'a str, y: &'a str, ann: T) -> &'a str
+    where T: Display {
+    println!("Announcement! {}", ann);
+    if x.len() > y.len() { x } else { y }
+}
+
+// Only returns first parameter so no need of lifetime on the second
+fn first<'a>(x: &'a str, y: &str) -> &'a str {
+    x
+}
+
+fn lifetime_test() {
+    println!("Lifetime test function called!");
+
+    // let string1 = String::from("abcd");
+    // let string2 = String::from("xyz");
+    // let result1 = longest(string1.as_str(), string2.as_str());
+    // println!("The longest string is {}", result1);
+
+    // let string1 = String::from("abcd");
+    // {
+    //     let string2 = String::from("xyz");
+    //     let result1 = longest(string1.as_str(), string2.as_str());
+    //     println!("The longest string is {}", result1);
+    // }
+
+    // let result1 = "a";
+    // let string1 = String::from("abcd");
+    // {
+    //     let string2 = String::from("xyz");
+    //     let result1 = longest(string1.as_str(), string2.as_str());
+    //     println!("The longest string is {}", result1);
+    // }
+    // // Because of shadowing in the inner scope, the value was not modifies here
+    // println!("The longest string is {}", result1);
+
+    let string1 = String::from("abcd");
+    let result1;
+    {
+        let string2 = String::from("xyz");
+        result1 = longest(string1.as_str(), string2.as_str());
+        println!("The longest string is {}", result1);
+    }
+    // Here, this doesn't work because string2 does not live long enough
+    //println!("The longest string is {}", result1);
+
+    println!("Lifetime test function ended");
+}
+
+// This was requiring lifetime before, but with some pattern recognition, the compiler let you not put it
+// fn first_word<'a>(str: &'a str) -> &'a str {
+fn first_word(s: &str) -> &str {
+    let bytes = s.as_bytes();
+
+    for (i, &item) in bytes.iter().enumerate() {
+        if item == b' ' {
+            return &s[0..i];
+        }
+    }
+
+    &s[..]
 }
